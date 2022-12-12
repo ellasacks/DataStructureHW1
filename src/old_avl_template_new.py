@@ -101,7 +101,7 @@ class AVLNode(object):
     """
 
     def setValue(self, value):
-        self.value = value
+        return None
 
     """sets the balance factor of the node
 
@@ -200,7 +200,7 @@ class AVLTreeList(object):
                 new_node.parent = node_predesessor
 
         # 2. rebalance tree
-        rotation_number = self.rebalanceTreeInsert(new_node)
+        rotation_number = self.rebalanceTree(new_node)
         # 3. update size and height from inserted node to the root
         self.updateFromNodeToRoot(new_node)
         return rotation_number
@@ -211,7 +211,7 @@ class AVLTreeList(object):
             self.updateSize(x.parent)
             x = x.parent
 
-    def rebalanceTreeInsert(self, x):
+    def rebalanceTree(self, x):
         rotation_number = 0
         y = x.parent
         while y != None:
@@ -223,12 +223,11 @@ class AVLTreeList(object):
             elif abs(bf) < 2 and y.height != previous_height:
                 y = y.parent
             elif abs(bf) == 2:
-                rotation_number = self.rotateTreeInsert(y)
-                break
+                rotation_number = self.rotateTree(y)
         return rotation_number
 
 
-    def rotateTreeInsert(self, y):
+    def rotateTree(self, y):
         rotation_number = 0
         bf = y.left.height - y.right.height
         if bf == -2:
@@ -343,127 +342,24 @@ class AVLTreeList(object):
     """
 
     def delete(self, i):
-
         if i >= self.size:
             return -1
         node = self.retrieve(i)
-        ### 1. delete node from tree:
-        ## 1.1 node is leaf
-        if node.getLeft() == node.getRight() == None:
-            if self.is_node_left_child(node):
-                node.getParent().setLeft(None)
+        if node.left == node.right == None:
+            if node.parent.right == node:
+                node.parent.right = None
             else:
-                node.getParent().setRight(None)
-            num = self.rebalanceTreeDelete(node.getParent())
-            node.setParent(None)
-            return num
-        # 1.2 node has only left child
-        if node.getLeft() != None and node.getRight() == None:
-            # change parent pointer
-            if self.is_node_left_child(node):
-                node.getParent().setLeft(node.getLeft())
+                node.parent.left = None
+            node.parent = None
+        if node.left != None and node.right == None:
+            if node.parent.right == node:
+                node.parent.right = node.left
             else:
-                node.getParent().setRight(node.getLeft())
-            # change child's parent pointer
-            node.getLeft().setParent(node.getParent())
-            #rebalance tree
-            num = self.rebalanceTreeDelete(node.getLeft())
-            # disconnect node from tree
-            node.setParent(None)
-            node.setLeft(None)
-            return num
-        # 1.3 node has only right child
-        if node.getLeft() == None and node.getRight != None:
-            # change parent pointer
-            if self.is_node_left_child(node):
-                node.getParent().setLeft(node.getRight())
-            else:
-                node.getParent().setRight(node.getRight())
-            # change child's parent pointer
-            node.getRight().setParent(node.getParent())
-            # rebalance tree
-            num = self.rebalanceTreeDelete(node.getRight())
-            # disconnect node from tree
-            node.setParent(None)
-            node.setRight(None)
-            return num
-        # 1.4 node has left and right child
-        else:
-            successor = self.getSucsessor(node)
-            node.setValue(successor.getValue())
-            if successor.getLeft() == successor.getRight() == None:
-                if self.is_node_left_child(successor):
-                    successor.getParent().setLeft(None)
-                else:
-                    successor.getParent().setRight(None)
-                num = self.rebalanceTreeDelete(successor.getParent())
-                successor.setParent(None)
-                return num
-            #successor has only right child
-            else:
-                if self.is_node_left_child(successor):
-                    successor.getParent().setLeft(successor.getRight())
-                else:
-                    successor.getParent().setRight(successor.getRight())
-                # change child's parent pointer
-                successor.getRight().setParent(successor.getParent())
-                # rebalance tree
-                num = self.rebalanceTreeDelete(successor.getRight())
-                # disconnect node from tree
-                successor.setParent(None)
-                successor.setRight(None)
-                return num
+                node.parent.left = node.left
+            node.left.parent = node.parent
+            node.parent = None
 
-
-    def rebalanceTreeDelete(self, x):
-        rotation_number = 0
-        y = x.parent
-        while y != None:
-            previous_height = y.height
-            self.updateHeight(y)
-            self.updateSize(y)
-            bf = y.left.height - y.right.height
-            if abs(bf) < 2 and y.height == previous_height:
-                break
-            elif abs(bf) < 2 and y.height != previous_height:
-                y = y.getParent()
-            elif abs(bf) == 2:
-                rotation_number += self.rotateTreeDelete(y)
-                y = y.getParent()
-        return rotation_number
-
-    def rotateTreeDelete(self, y):
-        rotation_number = 0
-        bf = y.left.height - y.right.height
-        if bf == -2:
-            bf_right = y.right.left.height - y.right.right.height
-            if bf_right == -1 or bf_right == 0:
-                self.rotateLeft(y)
-                rotation_number = 1
-            elif bf_right == 1:
-                self.rotateRight(y.right)
-                self.rotateLeft(y)
-                rotation_number = 2
-        if bf == 2:
-            bf_left = y.left.left.height - y.left.right.height
-            if bf_left == -1:
-                self.rotateLeft(y.left)
-                self.rotateRight(y)
-                rotation_number = 2
-            elif bf_left == 1 or bf_left == 0:
-                self.rotateRight(y)
-                rotation_number = 1
-        return rotation_number
-
-
-
-    """write explanation"""
-    def is_node_left_child(self, node):
-        if node.getParent().getLeft() == node:
-            return True
-        else:
-            return False
-
+        return -1
 
     """returns the value of the first item in the list
 
