@@ -1,0 +1,30 @@
+import src.avl_template_new
+from src.avl_template_new import AVLTreeList
+
+a = avl_template_new.AVLNode("a")
+b = avl_template_new.AVLNode("b")
+c = avl_template_new.AVLNode("c")
+d = avl_template_new.AVLNode("d")
+
+
+b.left = a
+b.right = c
+c.right = d
+a.parent = b
+c.parent = b
+c.parent = d
+tree = avl_template_new.AVLTreeList()
+tree.root = b
+tree.size = 4
+print(tree.listToArray())
+# print(tree.permutation())
+# print(tree.sort())
+# print(tree.first())
+# print(tree.last())
+
+
+print(tree.getPredesessor(a).value)
+print(tree.getSucsessor(d).value)
+
+
+
