@@ -15,13 +15,13 @@ class AVLNode(object):
     @param value: data of your node
     """
 
-    def __init__(self, value):
+    def __init__(self, value=None):
         self.value = value
         self.left = None
         self.right = None
         self.parent = None
         self.height = -1  # Balance factor
-        self.size = 1
+        self.size = 0
 
     """returns the left child
     @rtype: AVLNode
@@ -29,6 +29,8 @@ class AVLNode(object):
     """
 
     def getLeft(self):
+        if self.getLeft().getHeight() == -1:
+            return None
         return self.left
 
     """returns the right child
@@ -38,6 +40,8 @@ class AVLNode(object):
     """
 
     def getRight(self):
+        if self.getRight().getHeight() == -1:
+            return None
         return self.right
 
     """returns the parent 
@@ -112,6 +116,9 @@ class AVLNode(object):
     def setHeight(self, h):
         self.height = h
 
+    def setSize(self, size):
+        self.size = size
+
     """returns whether self is not a virtual node 
 
     @rtype: bool
@@ -119,7 +126,23 @@ class AVLNode(object):
     """
 
     def isRealNode(self):
-        return False
+        return self.height != -1
+
+
+    def getSize(self):
+        return self.size
+
+    def updateSize(self):
+        size = 1
+        if self.getRight().isRealNode():
+            size += self.getRight().getSize()
+        if self.getLeft().isRealNode():
+            size += self.getLeft().getSize()
+        self.size = size
+
+    def updateHeight(self):
+        '''//TODO Update only on real nodes'''
+        self.height = max(self.getRight().getHeight(), self.getLeft().getHeight()) + 1
 
 
 """
@@ -159,13 +182,13 @@ class AVLTreeList(object):
 
     def retrieve(self, i):
         def retrieve_rec(x, k):
-            rank = x.left.size + 1
+            rank = x.getLeft().getSize() + 1
             if k == rank:
                 return x
             elif k < rank:
-                return retrieve_rec(x.left, k)
+                return retrieve_rec(x.getLeft(), k)
             else:
-                return retrieve_rec(x.right, k - rank)
+                return retrieve_rec(x.getRight(), k - rank)
 
         return retrieve_rec(self.root, i + 1)
 
@@ -182,41 +205,54 @@ class AVLTreeList(object):
 
     def insert(self, i, val):
         # 1. insert a new node
-        self.size += 1
+
         new_node = AVLNode(val)
-        new_node.height = 0
+        new_node.setLeft(AVLNode())
+        new_node.setRight(AVLNode())
+        new_node.getRight().setParent(new_node)
+        new_node.getLeft().setParent(new_node)
+        new_node.updateHeight()
+        new_node.updateSize()
+
+        ## insert first node to empty tree
+        if self.empty():
+            self.root = new_node
+
+        ## insert last node
         if i == self.size:
-            node = self.most_left_node(self.root)
-            new_node.parent = node
-            node.right = new_node
+            node = self.most_right_node(self.root)
+            new_node.setParent(node)
+            node.setRight(new_node)
         else:
             node = self.retrieve(i+1)
-            if node.left == None:
-                node.left = new_node
-                new_node.parent = node
+            if not node.getLeft().isRealNode():
+                node.setLeft(new_node)
+                new_node.setParent(node)
             else:
                 node_predesessor = self.getPredesessor(node)
-                node_predesessor.right = new_node
-                new_node.parent = node_predesessor
+                node_predesessor.setRight(new_node)
+                new_node.setParent(node_predesessor)
+        self.size += 1
 
         # 2. rebalance tree
         rotation_number = self.rebalanceTreeInsert(new_node)
         # 3. update size and height from inserted node to the root
         self.updateFromNodeToRoot(new_node)
+
         return rotation_number
 
     def updateFromNodeToRoot(self, x):
-        while x.parent != None:
-            self.updateHeight(x.parent)
-            self.updateSize(x.parent)
-            x = x.parent
+        while x.getParent() != None:
+            x.getParent().updateHeight()
+            x.getParent().updateSize()
+            x = x.getParent()
 
     def rebalanceTreeInsert(self, x):
         rotation_number = 0
         y = x.parent
         while y != None:
             previous_height = y.height
-            self.updateHeight(y)
+            y.updateHeight()
             bf = y.left.height - y.right.height
             if abs(bf) < 2 and y.height == previous_height:
                 break
@@ -247,90 +283,92 @@ class AVLTreeList(object):
                 self.rotateRight(y)
                 rotation_number = 2
             elif bf_left == 1:
-               self.rotateRight(y)
-               rotation_number = 1
-
+                self.rotateRight(y)
+                rotation_number = 1
         return rotation_number
 
     def rotateLeft(self, y):
-        # *1. change pointers
+        # 1. change pointers
         B = y
-        A = y.right
-        B.right = A.left
-        B.right.parent = B
-        A.left = B
-        A.parent = B.parent
-        if B.parent != None:
-            if B.parent.right == B:
-                A.parent.right = A
+        A = y.getRight()
+        B.setRight(A.getLeft())
+        B.getRight().setParent(B)
+        A.setLeft(B)
+        A.setParent(B.getParent)
+        if B.getParent() != None:
+            if self.is_node_left_child(B):
+                A.getParent.setLeft(A)
             else:
-                A.parent.left = A
-        B.parent = A
-        # 2. update height and size only for A and B
-        self.updateHeight(B)
-        self.updateHeight(A)
-        self.updateSize(B)
-        self.updateSize(A)
+                A.getParent.setRight(A)
+        ## B is root
+        else:
+            self.root = A
+        B.setParent(A)
 
-        return None
+        # 2. update height and size only for A and B
+        B.updateHeight()
+        A.updateHeight()
+        B.updateSize()
+        A.updateSize()
 
 
     def rotateRight(self, y):
         # 1. change pointers
         B = y
-        A = y.left
-        B.left = A.right
-        B.left.parent = B
-        A.right = B
-        A.parent = B.parent
-        if B.parent != None:
-            if B.parent.right == B:
-                A.parent.right = A
+        A = y.getLeft()
+        B.setLeft(A.getRight())
+        B.getleft().setParent(B)
+        A.setRight(B)
+        A.setParent(B.getParent())
+        if B.getParent() != None:
+            if self.is_node_left_child(B):
+                A.getParent.setLeft(A)
             else:
-                A.parent.left = A
-        B.parent = A
+                A.getParent.setRight(A)
+        else:
+            self.root = A
+        B.setParent(A)
         # 2. update height and size only for A and B
-        self.updateHeight(B)
-        self.updateHeight(A)
-        self.updateSize(B)
-        self.updateSize(A)
-
-
-
-        return None
-
+        B.updateHeight()
+        A.updateHeight()
+        B.updateSize()
+        A.updateSize()
 
 
     def getPredesessor(self, x):
-        '''//TODO Detrmine what to do when no successorFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'''
-        if x.left != None:
-            return self.most_right_node(x.left)
-        y = x.parent
-        while y != None and x == y.left:
+        '''//TODO Detrmine what to do when no successor --- pointer to min and max??????????????????????????????????'''
+        if x == self.most_left_node(x):
+            return None
+        if x.getLeft().isRealNode():
+            return self.most_right_node(x.getLeft())
+        y = x.getParent()
+        while y != None and x == y.getLeft():
             x = y
-            y = x.parent
+            y = x.getParent()
         return y
 
     def getSucsessor(self, x):
-        '''//TODO Detrmine what to do when no successorFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF '''
-        if x.right != None:
-            return self.most_left_node(x.right)
-        y = x.parent
-        while y != None and x == y.right:
+        '''//TODO Detrmine what to do when no successor --- pointer to min and max??????????????????????????????????'''
+        if x == self.most_right_node(x):
+            return None
+        if x.getRight().isRealNode():
+            return self.most_left_node(x.getRight())
+        y = x.getParent()
+        while y != None and x == y.getRight():
             x = y
-            y = x.parent
+            y = x.getParent()
         return y
 
     def most_left_node(self, x):
         '''@returns the most left node in a tree'''
-        while x.left != None:
-            x = x.left
+        while x.getLeft().isRealNode():
+            x = x.getLeft()
         return x
 
     def most_right_node(self, x):
         '''@returns the most right node in a tree'''
-        while x.right != None:
-            x = x.right
+        while x.getRight().isRealNode():
+            x = x.getRight()
         return x
 
     """deletes the i'th item in the list
@@ -343,76 +381,96 @@ class AVLTreeList(object):
     """
 
     def delete(self, i):
-
         if i >= self.size:
             return -1
         node = self.retrieve(i)
+        self.size -= 1
         ### 1. delete node from tree:
         ## 1.1 node is leaf
-        if node.getLeft() == node.getRight() == None:
-            if self.is_node_left_child(node):
-                node.getParent().setLeft(None)
-            else:
-                node.getParent().setRight(None)
+        if node.getSize() == 1:
+            self.deleteLeaf(node)
             num = self.rebalanceTreeDelete(node.getParent())
-            node.setParent(None)
             return num
+
         # 1.2 node has only left child
-        if node.getLeft() != None and node.getRight() == None:
-            # change parent pointer
-            if self.is_node_left_child(node):
-                node.getParent().setLeft(node.getLeft())
-            else:
-                node.getParent().setRight(node.getLeft())
-            # change child's parent pointer
-            node.getLeft().setParent(node.getParent())
+        if node.getLeft().isRealNode() and not node.getRight().isRealNode():
+            temp = node.getLeft()
+            self.deleteNodeWithOnlyLeftChild(node)
             #rebalance tree
-            num = self.rebalanceTreeDelete(node.getLeft())
-            # disconnect node from tree
-            node.setParent(None)
-            node.setLeft(None)
+            num = self.rebalanceTreeDelete(temp)
             return num
+
         # 1.3 node has only right child
-        if node.getLeft() == None and node.getRight != None:
-            # change parent pointer
+        if not node.getLeft().isRealNode() and node.getRight().isRealNode:
+            temp = node.getRight()
+            self.deleteNodeWithOnlyRightChild(node)
+            # rebalance tree
+            num = self.rebalanceTreeDelete(temp)
+            return num
+
+        # 1.4 node has left and right child
+        else:
+            successor = self.getSucsessor(node)
+            node.setValue(successor.getValue())
+            ## successor is a leaf
+            if successor.getSize() == 0:
+                self.deleteLeaf(successor)
+                num = self.rebalanceTreeDelete(successor.getParent())
+                return num
+
+            #successor has only right child
+            else:
+                temp = successor.getRight()
+                self.deleteNodeWithOnlyRightChild(successor)
+                # rebalance tree
+                num = self.rebalanceTreeDelete(temp)
+                return num
+
+
+    def deleteLeaf(self, node):
+        if self.root == node:
+            self.root = None
+        else:
+            node.setValue(None)
+            node.setLeft(None)
+            node.setRight(None)
+            node.setHeight(-1)
+            node.setSize(0)
+
+
+    def deleteNodeWithOnlyRightChild(self, node):
+        # case 1: if node is root
+        if node == self.root:
+            node.getRight().setParent(None)
+            self.root = node.getRight()
+        # case 2: connect node right child to node parent
+        else:
             if self.is_node_left_child(node):
                 node.getParent().setLeft(node.getRight())
             else:
                 node.getParent().setRight(node.getRight())
             # change child's parent pointer
             node.getRight().setParent(node.getParent())
-            # rebalance tree
-            num = self.rebalanceTreeDelete(node.getRight())
-            # disconnect node from tree
             node.setParent(None)
-            node.setRight(None)
-            return num
-        # 1.4 node has left and right child
+
+        node.setRight(None)
+
+    def deleteNodeWithOnlyLeftChild(self, node):
+        # case 1: if node is root
+        if node == self.root:
+            node.getLeft().setParent(None)
+            self.root = node.getLeft()
+        # case 2: connect node right child to node parent
         else:
-            successor = self.getSucsessor(node)
-            node.setValue(successor.getValue())
-            if successor.getLeft() == successor.getRight() == None:
-                if self.is_node_left_child(successor):
-                    successor.getParent().setLeft(None)
-                else:
-                    successor.getParent().setRight(None)
-                num = self.rebalanceTreeDelete(successor.getParent())
-                successor.setParent(None)
-                return num
-            #successor has only right child
+            if self.is_node_left_child(node):
+                node.getParent().setLeft(node.getLeft())
             else:
-                if self.is_node_left_child(successor):
-                    successor.getParent().setLeft(successor.getRight())
-                else:
-                    successor.getParent().setRight(successor.getRight())
-                # change child's parent pointer
-                successor.getRight().setParent(successor.getParent())
-                # rebalance tree
-                num = self.rebalanceTreeDelete(successor.getRight())
-                # disconnect node from tree
-                successor.setParent(None)
-                successor.setRight(None)
-                return num
+                node.getParent().setRight(node.getLeft())
+            # change child's parent pointer
+            node.getLeft().setParent(node.getParent())
+            node.setParent(None)
+
+        node.setLeft(None)
 
 
     def rebalanceTreeDelete(self, x):
@@ -420,8 +478,8 @@ class AVLTreeList(object):
         y = x.parent
         while y != None:
             previous_height = y.height
-            self.updateHeight(y)
-            self.updateSize(y)
+            y.updateHeight()
+            y.updateSize()
             bf = y.left.height - y.right.height
             if abs(bf) < 2 and y.height == previous_height:
                 break
@@ -457,7 +515,7 @@ class AVLTreeList(object):
 
 
 
-    """write explanation"""
+    """works only when node has parent"""
     def is_node_left_child(self, node):
         if node.getParent().getLeft() == node:
             return True
@@ -572,24 +630,6 @@ class AVLTreeList(object):
     def getRoot(self):
         return None
 
-    def updateSize(self, x):
-        size = 1
-        if x.right != None:
-            size += x.right.size
-        if x.left != None:
-            size += x.left.size
-        x.size = size
 
-        # while x.parent != None:
-        #     x.parent.size += 1
-        #     x = x.parent
-
-    def updateHeight(self,x):
-        if x.right == None:
-            x.height = x.left.height + 1
-        elif x.left == None:
-            x.height = x.right.height + 1
-        else:
-            x.height = max(x.right.height, x.left.height) + 1
 
 
