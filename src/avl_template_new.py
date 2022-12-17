@@ -456,6 +456,7 @@ class AVLTreeList(object):
             node.setRight(None)
             node.setHeight(-1)
             node.setSize(0)
+    #         why no node.setParent(None)
 
 
     def deleteNodeWithOnlyRightChild(self, node):
@@ -502,13 +503,31 @@ class AVLTreeList(object):
             y.updateSize()
             bf = y.left.height - y.right.height
             if abs(bf) < 2 and y.height == previous_height:
-                self.updateFromNodeToRoot(y)
-                break
+                y = y.getParent()
+                # self.updateFromNodeToRoot(y)
+                # break
             elif abs(bf) < 2 and y.height != previous_height:
                 y = y.getParent()
             elif abs(bf) == 2:
                 rotation_number += self.rotateTreeDelete(y)
                 y = y.getParent()
+        return rotation_number
+
+    def rebalanceTreeInsertB(self, x):
+        rotation_number = 0
+        y = x.parent
+        while y != None:
+            previous_height = y.height
+            y.updateHeight()
+            y.updateSize()
+            bf = y.left.height - y.right.height
+            if abs(bf) < 2 and y.height == previous_height:
+                break
+            elif abs(bf) < 2 and y.height != previous_height:
+                y = y.parent
+            elif abs(bf) == 2:
+                rotation_number = self.rotateTreeInsert(y)
+                break
         return rotation_number
 
     def rotateTreeDelete(self, y):
@@ -574,8 +593,8 @@ class AVLTreeList(object):
     """
 
     def listToArray(self):
+        "//TODO corrently we are printing nullllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
         x = self.root
-
         def rec_listToArray(x):
             if x == None:
                 return []
@@ -740,6 +759,7 @@ class AVLTreeList(object):
         out = ""
         for row in self.printree(self.root):  # need printree.py file
             out = out + row + "\n"
+        print("\t \t \t root: v=" + str(self.root.getValue()) + " H=" + str(self.root.getHeight()) + " S=" + str(self.root.getSize()))
         print(out)
 
     def printree(self, t, bykey=True):
@@ -751,7 +771,7 @@ class AVLTreeList(object):
         if t == None:
             return ["#"]
 
-        thistr = str(t.key) if bykey else "v=" + str(t.getValue()) + "H=" + str(t.getHeight()) + "S=" + str(t.getSize())
+        thistr = str(t.key) if bykey else "v=" + str(t.getValue()) + " H=" + str(t.getHeight()) + " S=" + str(t.getSize())
 
         return self.conc(self.trepr(t.left, bykey), thistr, self.trepr(t.right, bykey))
 
@@ -801,6 +821,42 @@ class AVLTreeList(object):
         while row[i] == " ":
             i += 1
         return i
+
+
+    def rebalanceTreeDeleteOld(self, x):
+        rotation_number = 0
+        y = x.parent
+        while y != None:
+            previous_height = y.height
+            y.updateHeight()
+            y.updateSize()
+            bf = y.left.height - y.right.height
+            if abs(bf) < 2 and y.height == previous_height:
+                self.updateFromNodeToRoot(y)
+                break
+            elif abs(bf) < 2 and y.height != previous_height:
+                y = y.getParent()
+            elif abs(bf) == 2:
+                rotation_number += self.rotateTreeDelete(y)
+                y = y.getParent()
+        return rotation_number
+
+    def rebalanceTreeInsertOld(self, x):
+        rotation_number = 0
+        y = x.parent
+        while y != None:
+            previous_height = y.height
+            y.updateHeight()
+            y.updateSize()
+            bf = y.left.height - y.right.height
+            if abs(bf) < 2 and y.height == previous_height:
+                break
+            elif abs(bf) < 2 and y.height != previous_height:
+                y = y.parent
+            elif abs(bf) == 2:
+                rotation_number = self.rotateTreeInsert(y)
+                break
+        return rotation_number
 
 
 

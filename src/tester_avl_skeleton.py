@@ -859,7 +859,7 @@ class testAVLList(unittest.TestCase):
 
     def test_BF_after_deletion_alternatly(self):
         T = AVLTreeList()
-
+        iter_num = 0
         for i in range(100):
             T.insert(0, i)
 
@@ -874,7 +874,13 @@ class testAVLList(unittest.TestCase):
                 T.delete((T.length()-1)//3)
             else:
                 T.delete((T.length()-1)//7)
+            if abs(T.getRoot().getLeft().getHeight() - T.getRoot().getRight().getHeight()) >= 2:
+                # T.printt()
+                print(iter_num)
+            iter_num += 1
             self.in_order(T, T.getRoot(), self.check_BF)
+        T.printt()
+        print(T.listToArray())
 
     def test_BF_after_deleting_and_inserting_small(self):
         T = AVLTreeList()
