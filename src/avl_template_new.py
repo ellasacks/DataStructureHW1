@@ -186,6 +186,9 @@ class AVLTreeList(object):
     """
 
     def retrieve(self, i):
+        return self.treeSelect(i).getValue()
+
+    def treeSelect(self, i):
         def retrieve_rec(x, k):
             rank = x.getLeft().getSize() + 1
             if k == rank:
@@ -239,7 +242,7 @@ class AVLTreeList(object):
             self.firstItem = new_node
         # insert node in middle
         else:
-            node = self.retrieve(i)
+            node = self.treeSelect(i)
             if not node.getLeft().isRealNode():
                 node.setLeft(new_node)
                 new_node.setParent(node)
@@ -325,9 +328,8 @@ class AVLTreeList(object):
         # 2. update height and size only for A and B
         B.updateHeight()
         A.updateHeight()
-        self.updateFromNodeToRoot(B)
-        # B.updateSize()
-        # A.updateSize()
+        B.updateSize()
+        A.updateSize()
 
 
     def rotateRight(self, y):
@@ -349,9 +351,8 @@ class AVLTreeList(object):
         # 2. update height and size only for A and B
         B.updateHeight()
         A.updateHeight()
-        self.updateFromNodeToRoot(B)
-        # B.updateSize()
-        # A.updateSize()
+        B.updateSize()
+        A.updateSize()
 
 
     def getPredesessor(self, x):
@@ -402,7 +403,7 @@ class AVLTreeList(object):
     def delete(self, i):
         if i >= self.size:
             return -1
-        node = self.retrieve(i)
+        node = self.treeSelect(i)
         self.size -= 1
 
         ### 1. delete node from tree:
@@ -433,7 +434,7 @@ class AVLTreeList(object):
             ## successor is a leaf
             if successor.getSize() == 0:
                 self.deleteLeaf(successor)
-                num = self.rebalanceTreeDelete(successor.getParent())
+                num = self.rebalanceTreeDelete(successor)
 
             #successor has only right child
             else:
@@ -501,6 +502,7 @@ class AVLTreeList(object):
             y.updateSize()
             bf = y.left.height - y.right.height
             if abs(bf) < 2 and y.height == previous_height:
+                self.updateFromNodeToRoot(y)
                 break
             elif abs(bf) < 2 and y.height != previous_height:
                 y = y.getParent()
@@ -578,7 +580,6 @@ class AVLTreeList(object):
             if x == None:
                 return []
             return rec_listToArray(x.left) + [x.value] + rec_listToArray(x.right)
-
         return rec_listToArray(x)
 
     """returns the size of the list 
@@ -622,7 +623,87 @@ class AVLTreeList(object):
     """
 
     def concat(self, lst):
-        return None
+        if self.empty() and lst.empty():
+            return 0
+        elif self.empty() and not lst.empty():
+            self.root = lst.root
+            self.firstItem = lst.firstItem
+            self.lastItem = lst.lastItem
+            self.size = lst.size
+            return lst.root.getHeight()
+        elif not self.empty() and lst.empty():
+            return self.root.getHeight()
+
+        else:
+            self_height_origin = self.root.getHeight()
+            lst_height_origin = lst.root.getHeight()
+            if self.size == 1:
+                lst.insert(0, self.root.value)
+                self.root = lst.root
+                self.firstItem = lst.firstItem
+                self.lastItem = lst.lastItem
+                self.size = lst.size
+
+            elif lst.size == 1:
+                self.insert(self.size, lst.root.value)
+
+            elif self_height_origin < lst_height_origin:
+                deleted_max_node = self.lastItem
+                self.delete(self.size-1)
+
+                lst_node = lst.root
+                while lst_node.getHeight() > self.root.getHeight():
+                    lst_node = lst_node.getLeft()
+
+                deleted_max_node.setLeft(self.root)
+                self.root.setParent(deleted_max_node)
+                deleted_max_node.setRight(lst_node)
+                deleted_max_node.setParent(lst_node.getParent())
+                if not lst_node == lst.root:
+                    lst_node.getParent().setLeft(deleted_max_node)
+                else:
+                    lst.root = deleted_max_node
+                lst_node.setParent(deleted_max_node)
+
+                self.root = lst.root
+                self.lastItem = lst.lastItem
+                self.size += lst.size
+                deleted_max_node.updateHeight()
+                deleted_max_node.updateSize()
+                self.rebalanceTreeInsert(deleted_max_node)
+                self.updateFromNodeToRoot(deleted_max_node)
+
+            else:
+                deleted_min_node = lst.firstItem
+                lst.delete(lst.size - 1)
+
+                self_node = self.root
+                while self_node.getHeight() > lst.root.getHeight():
+                    self_node = self_node.getRight()
+
+                deleted_min_node.setRight(lst.root)
+                lst.root.setParent(deleted_min_node)
+                deleted_min_node.setLeft(self_node)
+                deleted_min_node.setParent(self_node.getParent())
+                if not self_node == self.root:
+                    self_node.getParent().setRight(deleted_min_node)
+                else:
+                    self.root = deleted_min_node
+
+                self_node.setParent(deleted_min_node)
+
+                self.lastItem = lst.lastItem
+                self.size += lst.size + 1
+                deleted_min_node.updateHeight()
+                deleted_min_node.updateSize()
+                self.rebalanceTreeInsert(deleted_min_node)
+                self.updateFromNodeToRoot(deleted_min_node)
+
+
+        return abs(self_height_origin - lst_height_origin)
+
+
+
 
     """searches for a *value* in the list
 
@@ -644,9 +725,7 @@ class AVLTreeList(object):
     def getRoot(self):
         return self.root
 
-
-
-    '''//TODO deleteeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'''
+    "//TODO deleteeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     def append(self, val):
         self.insert(self.length(), val)
 
@@ -655,6 +734,73 @@ class AVLTreeList(object):
             return -1
         return self.root.getHeight()
 
+
+
+    def printt(self):
+        out = ""
+        for row in self.printree(self.root):  # need printree.py file
+            out = out + row + "\n"
+        print(out)
+
+    def printree(self, t, bykey=True):
+        # for row in trepr(t, bykey):
+        #        print(row)
+        return self.trepr(t, False)
+
+    def trepr(self, t, bykey=False):
+        if t == None:
+            return ["#"]
+
+        thistr = str(t.key) if bykey else "v=" + str(t.getValue()) + "H=" + str(t.getHeight()) + "S=" + str(t.getSize())
+
+        return self.conc(self.trepr(t.left, bykey), thistr, self.trepr(t.right, bykey))
+
+    def conc(self, left, root, right):
+
+        lwid = len(left[-1])
+        rwid = len(right[-1])
+        rootwid = len(root)
+
+        result = [(lwid+1)*" " + root + (rwid+1)*" "]
+
+        ls = self.leftspace(left[0])
+        rs = self.rightspace(right[0])
+        result.append(ls*" " + (lwid-ls)*"_" + "/" + rootwid *
+                        " " + "\\" + rs*"_" + (rwid-rs)*" ")
+
+        for i in range(max(len(left), len(right))):
+            row = ""
+            if i < len(left):
+                row += left[i]
+            else:
+                row += lwid*" "
+
+            row += (rootwid+2)*" "
+
+            if i < len(right):
+                row += right[i]
+            else:
+                row += rwid*" "
+
+            result.append(row)
+
+        return result
+
+    def leftspace(self, row):
+        # row is the first row of a left node
+        # returns the index of where the second whitespace starts
+        i = len(row)-1
+        while row[i] == " ":
+            i -= 1
+        return i+1
+
+    def rightspace(self, row):
+        # row is the first row of a right node
+        # returns the index of where the first whitespace ends
+        i = 0
+        while row[i] == " ":
+            i += 1
+        return i
 
 
 

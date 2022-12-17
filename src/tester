@@ -1,10 +1,11 @@
 import src.avl_template_new
 from src.avl_template_new import AVLTreeList
+from src.avl_template_new import AVLNode
 
-a = avl_template_new.AVLNode("a")
-b = avl_template_new.AVLNode("b")
-c = avl_template_new.AVLNode("c")
-d = avl_template_new.AVLNode("d")
+a = AVLNode("a")
+b = AVLNode("b")
+c = AVLNode("c")
+d = AVLNode("d")
 
 
 b.left = a
@@ -13,7 +14,7 @@ c.right = d
 a.parent = b
 c.parent = b
 c.parent = d
-tree = avl_template_new.AVLTreeList()
+tree = AVLTreeList()
 tree.root = b
 tree.size = 4
 print(tree.listToArray())
