@@ -50,22 +50,22 @@ class testAVLList(unittest.TestCase):
 
     def compare_with_list_by_retrieve(self, tree, lst):
         for i in range(max(len(lst), tree.length())):
-            self.assertEqual(tree.treeSelect(i), lst[i])
+            self.assertEqual(tree.retrieve(i), lst[i])
 
     def test_empty(self):
         self.assertTrue(self.emptyList.empty())
         self.assertFalse(self.twentyTree.empty())
 
     def test_retrieve_basic(self):
-        self.assertIsNone(self.emptyList.treeSelect(0))
-        self.assertIsNone(self.emptyList.treeSelect(59))
-        self.assertIsNone(self.twentyTree.treeSelect(30))
-        self.assertIsNone(self.twentyTree.treeSelect(-1))
+        self.assertIsNone(self.emptyList.retrieve(0))
+        self.assertIsNone(self.emptyList.retrieve(59))
+        self.assertIsNone(self.twentyTree.retrieve(30))
+        self.assertIsNone(self.twentyTree.retrieve(-1))
         for i in range(20):
-            self.assertEqual(self.twentylist[i], self.twentyTree.treeSelect(i))
+            self.assertEqual(self.twentylist[i], self.twentyTree.retrieve(i))
         T = AVLTreeList()
         T.append('a')
-        self.assertEqual(T.treeSelect(0), "a")
+        self.assertEqual(T.retrieve(0), "a")
 
     def check_first(self, tree, lst):
         if not tree.empty():
