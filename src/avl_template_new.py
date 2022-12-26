@@ -186,6 +186,8 @@ class AVLTreeList(object):
     """
 
     def retrieve(self, i):
+        if i < 0 or i >= self.size:
+            return None
         return self.treeSelect(i).getValue()
 
     def treeSelect(self, i):
@@ -403,6 +405,8 @@ class AVLTreeList(object):
     def delete(self, i):
         if i >= self.size:
             return -1
+        if i < 0:
+            return -1
         node = self.treeSelect(i)
         self.size -= 1
 
@@ -414,6 +418,7 @@ class AVLTreeList(object):
 
 
         # 1.2 node has only left child
+
         elif node.getLeft().isRealNode() and not node.getRight().isRealNode():
             temp = node.getLeft()
             self.deleteNodeWithOnlyLeftChild(node)
@@ -443,8 +448,12 @@ class AVLTreeList(object):
                 # rebalance tree
                 num = self.rebalanceTreeDelete(temp)
 
-        self.firstItem = self.most_left_node(self.root)
-        self.lastItem = self.most_right_node(self.root)
+        if self.size == 0:
+            self.firstItem = None
+            self.lastItem = None
+        else:
+            self.firstItem = self.most_left_node(self.root)
+            self.lastItem = self.most_right_node(self.root)
         return num
 
     def deleteLeaf(self, node):
@@ -456,6 +465,7 @@ class AVLTreeList(object):
             node.setRight(None)
             node.setHeight(-1)
             node.setSize(0)
+    #         why no node.setParent(None)
 
 
     def deleteNodeWithOnlyRightChild(self, node):
@@ -502,14 +512,16 @@ class AVLTreeList(object):
             y.updateSize()
             bf = y.left.height - y.right.height
             if abs(bf) < 2 and y.height == previous_height:
-                self.updateFromNodeToRoot(y)
-                break
+                y = y.getParent()
+                # self.updateFromNodeToRoot(y)
+                # break
             elif abs(bf) < 2 and y.height != previous_height:
                 y = y.getParent()
             elif abs(bf) == 2:
                 rotation_number += self.rotateTreeDelete(y)
                 y = y.getParent()
         return rotation_number
+
 
     def rotateTreeDelete(self, y):
         rotation_number = 0
@@ -575,9 +587,10 @@ class AVLTreeList(object):
 
     def listToArray(self):
         x = self.root
-
+        if x == None:
+            return []
         def rec_listToArray(x):
-            if x == None:
+            if not x.isRealNode():
                 return []
             return rec_listToArray(x.left) + [x.value] + rec_listToArray(x.right)
         return rec_listToArray(x)
@@ -598,9 +611,54 @@ class AVLTreeList(object):
     """
 
     def sort(self):
-        "//TODO fix this"
-        l = self.listToArray().copy()
-        return l.sort()
+        array = self.listToArray()
+        sorted_array = self.quicksort(array)
+        return self.create_tree_from_array(sorted_array)
+
+    def quicksort(self, lst):
+        """ quick sort of lst """
+        if len(lst) <= 1:
+            return lst
+        else:
+            # pivot = random.choice(lst) # select a random element from list
+            pivot = lst[0]  # for a deterministic quicksort
+            smaller = [elem for elem in lst if elem < pivot]
+            equal = [elem for elem in lst if elem == pivot]
+            greater = [elem for elem in lst if elem > pivot]
+            return self.quicksort(smaller) + equal + self.quicksort(greater)
+
+    def create_tree_from_array(self, array):
+        tree = AVLTreeList()
+        for item in array:
+            tree.insert(tree.length, item)
+        return tree
+
+    def create_tree_from_array_On(self, array):
+        root_node = self.rec_create_tree_from_array_On(0, len(array), array)
+        tree = AVLTreeList()
+        tree.size = root_node.getSize()
+        self.root = root_node
+        self.firstItem = tree.most_right_node(self.root)
+        self.lastItem = tree.most_left_node(self.root)
+        return tree
+
+    def rec_create_tree_from_array_On(self, right, left, array):
+        if left > right:
+            # return a leaf with virtual node
+            virtualNode = AVLNode()
+            return AVLNode()
+        mid = (right + left) // 2
+        mid_node = AVLNode(array[mid])
+
+        left_sub_tree = self.rec_create_tree_from_array_On(right, mid - 1, array)
+        right_sub_tree = self.rec_create_tree_from_array_On(mid + 1, left, array)
+        mid_node.setLeft(left_sub_tree)
+        mid_node.setRight(right_sub_tree)
+        left_sub_tree.setParent(mid_node)
+        right_sub_tree.setParent(mid_node)
+        mid_node.updateHeight()
+        mid_node.updateSize()
+        return mid_node
 
     """permute the info values of the list 
 
@@ -609,10 +667,19 @@ class AVLTreeList(object):
     """
 
     def permutation(self):
-        l = self.listToArray().copy()
+        array = self.listToArray()
+        shuffled_array = self.shuffle_list(array)
+        return self.create_tree_from_array(shuffled_array)
 
-        random.shuffle(l)
-        return
+    def shuffle_list(self, lst):
+        new_list = []
+        lst_len = len(lst)
+        for i in range(lst_len):
+            random_index = random.randint(0, len(lst)-1)
+            new_list.append(lst[random_index])
+            lst.pop(random_index)
+        return new_list
+
 
     """concatenates lst to self
 
@@ -630,9 +697,9 @@ class AVLTreeList(object):
             self.firstItem = lst.firstItem
             self.lastItem = lst.lastItem
             self.size = lst.size
-            return lst.root.getHeight()
+            return abs(-1 - lst.root.getHeight())
         elif not self.empty() and lst.empty():
-            return self.root.getHeight()
+            return abs(self.root.getHeight() - (-1) )
 
         else:
             self_height_origin = self.root.getHeight()
@@ -648,7 +715,7 @@ class AVLTreeList(object):
                 self.insert(self.size, lst.root.value)
 
             elif self_height_origin < lst_height_origin:
-                deleted_max_node = self.lastItem
+                deleted_max_node = AVLNode(self.lastItem.getValue())
                 self.delete(self.size-1)
 
                 lst_node = lst.root
@@ -667,15 +734,16 @@ class AVLTreeList(object):
 
                 self.root = lst.root
                 self.lastItem = lst.lastItem
-                self.size += lst.size
+                self.size += lst.size + 1
                 deleted_max_node.updateHeight()
                 deleted_max_node.updateSize()
                 self.rebalanceTreeInsert(deleted_max_node)
                 self.updateFromNodeToRoot(deleted_max_node)
 
             else:
-                deleted_min_node = lst.firstItem
-                lst.delete(lst.size - 1)
+                deleted_min_node = AVLNode(lst.firstItem.getValue())
+                lst.delete(0)
+
 
                 self_node = self.root
                 while self_node.getHeight() > lst.root.getHeight():
@@ -696,7 +764,7 @@ class AVLTreeList(object):
                 self.size += lst.size + 1
                 deleted_min_node.updateHeight()
                 deleted_min_node.updateSize()
-                self.rebalanceTreeInsert(deleted_min_node)
+                self.rebalanceTreeDelete(deleted_min_node)
                 self.updateFromNodeToRoot(deleted_min_node)
 
 
@@ -714,7 +782,14 @@ class AVLTreeList(object):
     """
 
     def search(self, val):
-        return None
+        if self.empty():
+            return -1
+        array = self.listToArray()
+        for i in range(len(array)):
+            if array[i] == val:
+                return i
+        return -1
+
 
     """returns the root of the tree representing the list
 
@@ -740,6 +815,7 @@ class AVLTreeList(object):
         out = ""
         for row in self.printree(self.root):  # need printree.py file
             out = out + row + "\n"
+        print("\t \t \t root: v=" + str(self.root.getValue()) + " H=" + str(self.root.getHeight()) + " S=" + str(self.root.getSize()))
         print(out)
 
     def printree(self, t, bykey=True):
@@ -751,7 +827,7 @@ class AVLTreeList(object):
         if t == None:
             return ["#"]
 
-        thistr = str(t.key) if bykey else "v=" + str(t.getValue()) + "H=" + str(t.getHeight()) + "S=" + str(t.getSize())
+        thistr = str(t.key) if bykey else "v=" + str(t.getValue()) + " H=" + str(t.getHeight()) + " S=" + str(t.getSize())
 
         return self.conc(self.trepr(t.left, bykey), thistr, self.trepr(t.right, bykey))
 
@@ -801,6 +877,5 @@ class AVLTreeList(object):
         while row[i] == " ":
             i += 1
         return i
-
 
 
