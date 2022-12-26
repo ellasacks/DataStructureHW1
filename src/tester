@@ -1,7 +1,9 @@
 import src.avl_template_new
 from src.avl_template_new import AVLTreeList
 from src.avl_template_new import AVLNode
-
+import random
+import collections
+import time
 
 def test_BF_after_deletion_alternatly():
     T = AVLTreeList()
@@ -29,4 +31,55 @@ def test_BF_after_deletion_alternatly():
 
 
 
-test_BF_after_deletion_alternatly()
+# test_BF_after_deletion_alternatly()
+
+
+def rotationCountInsert(number):
+    sum_rotations = 0
+    t1 = AVLTreeList()
+    for i in range(number):
+        # random_index = random.randint(0, t1.size)
+        sum_rotations += t1.insert(t1.size, i)
+    print("tree size" + str(t1.size))
+    return sum_rotations
+
+def rotationCountDeletion(number):
+    t1 = AVLTreeList()
+    for i in range(number):
+        t1.insert(0, i)
+    sum_rotations = 0
+    for i in range(number):
+        random_index = random.randint(0, t1.size-1)
+        sum_rotations += t1.delete(random_index)
+    print("tree size: " + str(t1.size))
+    return sum_rotations
+
+def rotationInsertDelete(number):
+    t1 = AVLTreeList()
+
+    for i in range(number//2):
+        random_index = random.randint(0, t1.size)
+        t1.insert(random_index, i)
+    sum_rotations = 0
+    for i in range(number//2, 3*number//4):
+        random_index_insert = random.randint(0, t1.size)
+        sum_rotations += t1.insert(random_index_insert, i)
+        random_index_delete = random.randint(0, t1.size-1)
+        sum_rotations += t1.delete(random_index_delete)
+    print("tree size: " + str(t1.size))
+    return sum_rotations
+
+
+
+print(rotationInsertDelete(1500*(2**1)))
+print(rotationInsertDelete(1500*(2**2)))
+print(rotationInsertDelete(1500*(2**3)))
+print(rotationInsertDelete(1500*(2**4)))
+print(rotationInsertDelete(1500*(2**5)))
+print(rotationInsertDelete(1500*(2**6)))
+print(rotationInsertDelete(1500*(2**7)))
+print(rotationInsertDelete(1500*(2**8)))
+print(rotationInsertDelete(1500*(2**9)))
+print(rotationInsertDelete(1500*(2**10)))
+
+

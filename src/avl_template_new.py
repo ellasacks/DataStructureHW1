@@ -622,7 +622,6 @@ class AVLTreeList(object):
         else:
             # pivot = random.choice(lst) # select a random element from list
             pivot = lst[0]  # for a deterministic quicksort
-
             smaller = [elem for elem in lst if elem < pivot]
             equal = [elem for elem in lst if elem == pivot]
             greater = [elem for elem in lst if elem > pivot]
@@ -633,6 +632,33 @@ class AVLTreeList(object):
         for item in array:
             tree.insert(tree.length, item)
         return tree
+
+    def create_tree_from_array_On(self, array):
+        root_node = self.rec_create_tree_from_array_On(0, len(array), array)
+        tree = AVLTreeList()
+        tree.size = root_node.getSize()
+        self.root = root_node
+        self.firstItem = tree.most_right_node(self.root)
+        self.lastItem = tree.most_left_node(self.root)
+        return tree
+
+    def rec_create_tree_from_array_On(self, right, left, array):
+        if left > right:
+            # return a leaf with virtual node
+            virtualNode = AVLNode()
+            return AVLNode()
+        mid = (right + left) // 2
+        mid_node = AVLNode(array[mid])
+
+        left_sub_tree = self.rec_create_tree_from_array_On(right, mid - 1, array)
+        right_sub_tree = self.rec_create_tree_from_array_On(mid + 1, left, array)
+        mid_node.setLeft(left_sub_tree)
+        mid_node.setRight(right_sub_tree)
+        left_sub_tree.setParent(mid_node)
+        right_sub_tree.setParent(mid_node)
+        mid_node.updateHeight()
+        mid_node.updateSize()
+        return mid_node
 
     """permute the info values of the list 
 
@@ -649,20 +675,12 @@ class AVLTreeList(object):
         new_list = []
         lst_len = len(lst)
         for i in range(lst_len):
-            random_index = self.roll_dice(len(lst)) - 1
+            random_index = random.randint(0, len(lst)-1)
             new_list.append(lst[random_index])
             lst.pop(random_index)
         return new_list
 
-    def roll_dice(self, d):
-        random_number = random.random()
-        i = 1
-        part_of_d = 1 / d
-        while i <= d:
-            if part_of_d * i > random_number:
-                return i
-            else:
-                i += 1
+
     """concatenates lst to self
 
     @type lst: AVLTreeList
