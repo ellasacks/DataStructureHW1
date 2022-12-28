@@ -358,8 +358,7 @@ class AVLTreeList(object):
 
 
     def getPredesessor(self, x):
-        '''//TODO Detrmine what to do when no successor --- pointer to min and max??????????????????????????????????'''
-        if x == self.most_left_node(x):
+        if x == self.firstItem:
             return None
         if x.getLeft().isRealNode():
             return self.most_right_node(x.getLeft())
@@ -370,8 +369,7 @@ class AVLTreeList(object):
         return y
 
     def getSucsessor(self, x):
-        '''//TODO Detrmine what to do when no successor --- pointer to min and max??????????????????????????????????'''
-        if x == self.most_right_node(x):
+        if x == self.lastItem:
             return None
         if x.getRight().isRealNode():
             return self.most_left_node(x.getRight())
@@ -383,12 +381,18 @@ class AVLTreeList(object):
 
     def most_left_node(self, x):
         '''@returns the most left node in a tree'''
+        '''//TODO to update'''
+        # if self.empty():
+        #     return None
         while x.getLeft().isRealNode():
             x = x.getLeft()
         return x
 
     def most_right_node(self, x):
         '''@returns the most right node in a tree'''
+        '''//TODO to check'''
+        # if self.empty():
+        #     return None
         while x.getRight().isRealNode():
             x = x.getRight()
         return x
@@ -586,14 +590,14 @@ class AVLTreeList(object):
     """
 
     def listToArray(self):
-        x = self.root
-        if x == None:
-            return []
-        def rec_listToArray(x):
-            if not x.isRealNode():
-                return []
-            return rec_listToArray(x.left) + [x.value] + rec_listToArray(x.right)
-        return rec_listToArray(x)
+        lst = []
+        if self.empty():
+            return lst
+        min_node = self.firstItem
+        for i in range(self.root.size):
+            lst.append(min_node.getValue())
+            min_node = self.getSucsessor(min_node)
+        return lst
 
     """returns the size of the list 
 
@@ -612,15 +616,21 @@ class AVLTreeList(object):
 
     def sort(self):
         array = self.listToArray()
-        sorted_array = self.quicksort(array)
-        return self.create_tree_from_array(sorted_array)
+        none_lst = []
+        value_lst = []
+        for value in array:
+            if value == None:
+                none_lst.append(value)
+            else:
+                value_lst.append(value)
+        sorted_array = self.quicksort(value_lst)
+        return self.create_tree_from_array(sorted_array + none_lst)
 
     def quicksort(self, lst):
         """ quick sort of lst """
         if len(lst) <= 1:
             return lst
         else:
-            # pivot = random.choice(lst) # select a random element from list
             pivot = lst[0]  # for a deterministic quicksort
             smaller = [elem for elem in lst if elem < pivot]
             equal = [elem for elem in lst if elem == pivot]
@@ -628,30 +638,27 @@ class AVLTreeList(object):
             return self.quicksort(smaller) + equal + self.quicksort(greater)
 
     def create_tree_from_array(self, array):
-        tree = AVLTreeList()
-        for item in array:
-            tree.insert(tree.length, item)
-        return tree
-
-    def create_tree_from_array_On(self, array):
-        root_node = self.rec_create_tree_from_array_On(0, len(array), array)
+        '''//TODO UPDATED'''
+        if len(array) == 0:
+            return AVLTreeList()
+        root_node = self.rec_create_tree_from_array(0, len(array)-1, array)
         tree = AVLTreeList()
         tree.size = root_node.getSize()
-        self.root = root_node
-        self.firstItem = tree.most_right_node(self.root)
-        self.lastItem = tree.most_left_node(self.root)
+        tree.root = root_node
+        tree.firstItem = tree.most_left_node(tree.root)
+        tree.lastItem = tree.most_right_node(tree.root)
         return tree
 
-    def rec_create_tree_from_array_On(self, right, left, array):
+    def rec_create_tree_from_array(self, left, right, array):
         if left > right:
             # return a leaf with virtual node
             virtualNode = AVLNode()
-            return AVLNode()
-        mid = (right + left) // 2
+            return virtualNode
+        mid = (left + right) // 2
         mid_node = AVLNode(array[mid])
 
-        left_sub_tree = self.rec_create_tree_from_array_On(right, mid - 1, array)
-        right_sub_tree = self.rec_create_tree_from_array_On(mid + 1, left, array)
+        left_sub_tree = self.rec_create_tree_from_array(left, mid - 1, array)
+        right_sub_tree = self.rec_create_tree_from_array(mid + 1, right, array)
         mid_node.setLeft(left_sub_tree)
         mid_node.setRight(right_sub_tree)
         left_sub_tree.setParent(mid_node)

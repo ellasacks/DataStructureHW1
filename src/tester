@@ -33,6 +33,39 @@ def test_BF_after_deletion_alternatly():
 
 # test_BF_after_deletion_alternatly()
 
+def testListToArray():
+    T = AVLTreeList()
+    # t0 = T.sort()
+    # print(t0.listToArray())
+    # t0.permutation()
+    # print(t0.listToArray())
+    # for i in range(10):
+    #     T.insert(0, i)
+    lst = [0, 1,2,3, None, 4,5]
+    T1 = AVLTreeList()
+    t1 = T1.create_tree_from_array(lst)
+    print(t1.listToArray())
+    t1_sorted = t1.sort()
+    print(t1_sorted.listToArray())
+    t1_permutated = t1_sorted.permutation()
+    print(t1_permutated.listToArray())
+    # t = T.sort()
+    # print(t.listToArray())
+    # t_per = T.permutation()
+    # print(t_per.listToArray())
+    # T1 = AVLTreeList()
+    # for i in range(10):
+    #     T1.insert(0, i)
+    # T1.sort()
+    # print(T1.listToArray())
+
+testListToArray()
+
+# def testSuccessor():
+#     T = AVLTreeList()
+#     T.insert(0,0)
+#     T.insert(1,1)
+#     T.getSucsessor()
 
 def rotationCountInsert(number):
     sum_rotations = 0
@@ -71,15 +104,15 @@ def rotationInsertDelete(number):
 
 
 
-print(rotationInsertDelete(1500*(2**1)))
-print(rotationInsertDelete(1500*(2**2)))
-print(rotationInsertDelete(1500*(2**3)))
-print(rotationInsertDelete(1500*(2**4)))
-print(rotationInsertDelete(1500*(2**5)))
-print(rotationInsertDelete(1500*(2**6)))
-print(rotationInsertDelete(1500*(2**7)))
-print(rotationInsertDelete(1500*(2**8)))
-print(rotationInsertDelete(1500*(2**9)))
-print(rotationInsertDelete(1500*(2**10)))
+# print(rotationInsertDelete(1500*(2**1)))
+# print(rotationInsertDelete(1500*(2**2)))
+# print(rotationInsertDelete(1500*(2**3)))
+# print(rotationInsertDelete(1500*(2**4)))
+# print(rotationInsertDelete(1500*(2**5)))
+# print(rotationInsertDelete(1500*(2**6)))
+# print(rotationInsertDelete(1500*(2**7)))
+# print(rotationInsertDelete(1500*(2**8)))
+# print(rotationInsertDelete(1500*(2**9)))
+# print(rotationInsertDelete(1500*(2**10)))
 
 
