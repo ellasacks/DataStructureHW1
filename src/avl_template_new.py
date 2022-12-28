@@ -638,7 +638,6 @@ class AVLTreeList(object):
             return self.quicksort(smaller) + equal + self.quicksort(greater)
 
     def create_tree_from_array(self, array):
-        '''//TODO UPDATED'''
         if len(array) == 0:
             return AVLTreeList()
         root_node = self.rec_create_tree_from_array(0, len(array)-1, array)
@@ -697,87 +696,91 @@ class AVLTreeList(object):
     """
 
     def concat(self, lst):
-        if self.empty() and lst.empty():
-            return 0
-        elif self.empty() and not lst.empty():
-            self.root = lst.root
-            self.firstItem = lst.firstItem
-            self.lastItem = lst.lastItem
-            self.size = lst.size
-            return abs(-1 - lst.root.getHeight())
-        elif not self.empty() and lst.empty():
-            return abs(self.root.getHeight() - (-1) )
+        if self.empty() or lst.empty():
+            if self.empty() and lst.empty():
+                return 0
+            elif self.empty() and not lst.empty():
+                self.root = lst.root
+                self.firstItem = lst.firstItem
+                self.lastItem = lst.lastItem
+                self.size = lst.size
+                return abs(-1 - lst.root.getHeight())
+            else:
+                return abs(self.root.getHeight() - (-1))
 
-        else:
+        elif self.size == 1 or lst.size == 1:
             self_height_origin = self.root.getHeight()
             lst_height_origin = lst.root.getHeight()
-            if self.size == 1:
+            if lst.size == 1:
+                self.insert(self.size, lst.root.value)
+            else:
                 lst.insert(0, self.root.value)
                 self.root = lst.root
                 self.firstItem = lst.firstItem
                 self.lastItem = lst.lastItem
                 self.size = lst.size
 
-            elif lst.size == 1:
-                self.insert(self.size, lst.root.value)
-
-            elif self_height_origin < lst_height_origin:
-                deleted_max_node = AVLNode(self.lastItem.getValue())
-                self.delete(self.size-1)
-
-                lst_node = lst.root
-                while lst_node.getHeight() > self.root.getHeight():
-                    lst_node = lst_node.getLeft()
-
-                deleted_max_node.setLeft(self.root)
-                self.root.setParent(deleted_max_node)
-                deleted_max_node.setRight(lst_node)
-                deleted_max_node.setParent(lst_node.getParent())
-                if not lst_node == lst.root:
-                    lst_node.getParent().setLeft(deleted_max_node)
-                else:
-                    lst.root = deleted_max_node
-                lst_node.setParent(deleted_max_node)
-
-                self.root = lst.root
-                self.lastItem = lst.lastItem
-                self.size += lst.size + 1
-                deleted_max_node.updateHeight()
-                deleted_max_node.updateSize()
-                self.rebalanceTreeInsert(deleted_max_node)
-                self.updateFromNodeToRoot(deleted_max_node)
-
+        else:
+            self_height_origin = self.root.getHeight()
+            lst_height_origin = lst.root.getHeight()
+            if self_height_origin < lst_height_origin:
+                self.concat_small_self_to_big_list(lst)
             else:
-                deleted_min_node = AVLNode(lst.firstItem.getValue())
-                lst.delete(0)
-
-
-                self_node = self.root
-                while self_node.getHeight() > lst.root.getHeight():
-                    self_node = self_node.getRight()
-
-                deleted_min_node.setRight(lst.root)
-                lst.root.setParent(deleted_min_node)
-                deleted_min_node.setLeft(self_node)
-                deleted_min_node.setParent(self_node.getParent())
-                if not self_node == self.root:
-                    self_node.getParent().setRight(deleted_min_node)
-                else:
-                    self.root = deleted_min_node
-
-                self_node.setParent(deleted_min_node)
-
-                self.lastItem = lst.lastItem
-                self.size += lst.size + 1
-                deleted_min_node.updateHeight()
-                deleted_min_node.updateSize()
-                self.rebalanceTreeDelete(deleted_min_node)
-                self.updateFromNodeToRoot(deleted_min_node)
-
+                self.concat_big_self_to_small_list(lst)
 
         return abs(self_height_origin - lst_height_origin)
 
+    def concat_big_self_to_small_list(self, lst):
+        deleted_min_node = AVLNode(lst.firstItem.getValue())
+        lst.delete(0)
 
+        self_node = self.root
+        while self_node.getHeight() > lst.root.getHeight():
+            self_node = self_node.getRight()
+
+        deleted_min_node.setRight(lst.root)
+        lst.root.setParent(deleted_min_node)
+        deleted_min_node.setLeft(self_node)
+        deleted_min_node.setParent(self_node.getParent())
+        if not self_node == self.root:
+            self_node.getParent().setRight(deleted_min_node)
+        else:
+            self.root = deleted_min_node
+        self_node.setParent(deleted_min_node)
+        self.lastItem = lst.lastItem
+        self.size += lst.size + 1
+        deleted_min_node.updateHeight()
+        deleted_min_node.updateSize()
+        self.rebalanceTreeDelete(deleted_min_node)
+        self.updateFromNodeToRoot(deleted_min_node)
+
+
+    def concat_small_self_to_big_list(self, lst):
+        deleted_max_node = AVLNode(self.lastItem.getValue())
+        self.delete(self.size - 1)
+
+        lst_node = lst.root
+        while lst_node.getHeight() > self.root.getHeight():
+            lst_node = lst_node.getLeft()
+
+        deleted_max_node.setLeft(self.root)
+        self.root.setParent(deleted_max_node)
+        deleted_max_node.setRight(lst_node)
+        deleted_max_node.setParent(lst_node.getParent())
+        if not lst_node == lst.root:
+            lst_node.getParent().setLeft(deleted_max_node)
+        else:
+            lst.root = deleted_max_node
+        lst_node.setParent(deleted_max_node)
+
+        self.root = lst.root
+
+        self.lastItem = lst.lastItem
+        self.size += lst.size + 1
+        deleted_max_node.updateHeight()
+        deleted_max_node.updateSize()
+        self.rebalanceTreeDelete(deleted_max_node)
+        self.updateFromNodeToRoot(deleted_max_node)
 
 
     """searches for a *value* in the list

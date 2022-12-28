@@ -49,6 +49,7 @@ def testListToArray():
     print(t1_sorted.listToArray())
     t1_permutated = t1_sorted.permutation()
     print(t1_permutated.listToArray())
+    t1_permutated.printt()
     # t = T.sort()
     # print(t.listToArray())
     # t_per = T.permutation()
